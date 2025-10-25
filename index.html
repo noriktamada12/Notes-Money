@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pencatatan Pengeluaran Suara</title>
+<style>
+:root{
+  --bg:#0b0b0b;
+  --panel:#111;
+  --accent:#fff;
+  --muted:#bbb;
+  --border:#222;
+  --danger:#ff5c5c;
+  font-family:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--accent);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:16px;
+}
+.card{
+  width:100%;
+  max-width:700px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.6);
+  padding:18px;
+}
+header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.logo{
+  width:48px;height:48px;border-radius:10px;
+  background:#fff;color:#000;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 10px rgba(255,255,255,0.1);
+}
+h1{margin:0;font-size:18px;}
+.lead{color:var(--muted);font-size:13px;margin:4px 0 0 0}
+.recorder{
+  display:flex;align-items:center;gap:10px;
+  border:1px solid var(--border);border-radius:10px;
+  padding:10px;margin-top:12px;
+}
+.mic{
+  width:50px;height:50px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#ff6b6b22,#ff6b6b11);
+  font-size:20px;cursor:pointer;transition:.2s;
+}
+.mic.recording{background:#ff5c5c;color:#fff;transform:scale(1.1)}
+.status{font-size:13px;color:var(--muted)}
+.btn{
+  border:none;border-radius:10px;
+  background:#1a1a1a;color:#fff;font-weight:600;
+  padding:10px 14px;margin:6px 4px;cursor:pointer;
+}
+.btn:hover{background:#222}
+.btn.danger{background:#3b0000}
+.table-wrap{overflow:auto;margin-top:12px;border:1px solid var(--border);border-radius:10px;}
+table{width:100%;border-collapse:collapse;min-width:500px;}
+th,td{padding:10px 12px;font-size:14px}
+th{text-align:left;color:var(--muted);border-bottom:1px solid var(--border)}
+td{text-align:left;border-bottom:1px solid #151515}
+.amount{text-align:right;font-weight:700}
+.row-actions{text-align:right}
+.icon-btn{
+  background:none;border:none;color:var(--muted);
+  cursor:pointer;font-size:16px;
+}
+.icon-btn:hover{color:var(--danger)}
+.total-area{
+  display:flex;justify-content:space-between;
+  align-items:center;margin-top:10px;font-size:15px;
+}
+.total{font-weight:800;}
+.toast{
+  position:fixed;bottom:20px;left:50%;
+  transform:translateX(-50%);
+  background:#111;padding:10px 16px;border-radius:10px;
+  font-size:13px;border:1px solid var(--border);
+  box-shadow:0 0 10px rgba(0,0,0,0.6);
+  display:none;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .3s ease;}
+@media(max-width:600px){
+  h1{font-size:16px}
+  .lead{font-size:12px}
+  th,td{font-size:13px}
+  .mic{width:44px;height:44px;font-size:18px}
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <header>
+    <div class="logo">Rp</div>
+    <div>
+      <h1>Catatan Pengeluaran Suara</h1>
+      <p class="lead">Ucapkan: “catat pengeluaran 5000 untuk kopi”</p>
+    </div>
+  </header>
+
+  <div class="recorder">
+    <div class="mic" id="mic">🎤</div>
+    <div>
+      <div class="status">Status: <span id="statusText">Idle</span></div>
+    </div>
+  </div>
+
+  <button class="btn" id="addManual">Tambah Manual</button>
+  <button class="btn danger" id="resetAll">Reset Semua</button>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Tanggal</th><th>Keterangan</th><th class="amount">Jumlah</th><th></th></tr>
+      </thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+
+  <div class="total-area">
+    <div>Total:</div>
+    <div class="total" id="totalDisplay">Rp0</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = sel => document.querySelector(sel);
+const STORAGE_KEY = "voiceExpense_v2";
+
+/* ===== Format ===== */
+const fmt = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n);
+const now = ()=> new Date().toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+/* ===== Toast ===== */
+function toast(msg){
+  const t=$("#toast");
+  t.textContent=msg; t.style.display="block";
+  setTimeout(()=>t.style.display="none",2500);
+}
+
+/* ===== Storage ===== */
+function getData(){return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}
+function saveData(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
+
+/* ===== Render ===== */
+function render(){
+  const data=getData();
+  const tb=$("#list");
+  tb.innerHTML="";
+  let total=0;
+  data.forEach((d,i)=>{
+    total+=Number(d.amount);
+    const tr=document.createElement("tr");
+    tr.classList.add("fade-in");
+    tr.innerHTML=`<td>${d.date}</td><td>${d.note}</td><td class="amount">${fmt(d.amount)}</td><td class="row-actions"><button class="icon-btn" data-i="${i}">🗑️</button></td>`;
+    tb.appendChild(tr);
+  });
+  $("#totalDisplay").textContent=fmt(total);
+  tb.querySelectorAll(".icon-btn").forEach(b=>b.onclick=e=>{
+    const arr=getData();
+    arr.splice(b.dataset.i,1); saveData(arr); render(); toast("Item dihapus");
+  });
+}
+
+/* ===== Reset ===== */
+$("#resetAll").onclick=()=>{
+  if(confirm("Hapus semua data?")){localStorage.removeItem(STORAGE_KEY);render();toast("Data direset")}
+};
+
+/* ===== Manual Add ===== */
+$("#addManual").onclick=()=>{
+  const note=prompt("Keterangan:");
+  if(!note)return;
+  const amt=parseInt(prompt("Jumlah (contoh: 2500):").replace(/\D/g,""));
+  if(!amt)return alert("Jumlah tidak valid");
+  const d=getData();
+  d.unshift({date:now(),note,amount:amt});
+  saveData(d);render();toast("Ditambahkan");
+};
+
+/* ===== Parsing suara ===== */
+function parseVoice(txt){
+  txt=txt.toLowerCase();
+  // angka + kata (ribu/juta) atau angka kecil
+  const numMatch = txt.match(/(\d+(?:[.,]\d+)?)(\s*(ribu|rb|juta|jt))?/);
+  if(numMatch){
+    let n=parseFloat(numMatch[1].replace(",","."));
+    let mult=1;
+    const unit=(numMatch[3]||"").trim();
+    if(unit.includes("ribu")||unit==="rb")mult=1000;
+    if(unit.includes("juta")||unit==="jt")mult=1000000;
+    let amount=Math.round(n*mult);
+    // tangani uang kecil seperti 2500, 3500, dst tanpa kata ribu
+    if(amount<1000&&n<100){amount*=1000;}
+    let note="";
+    const after=txt.split(numMatch[0])[1]||"";
+    const parts=after.split(/untuk|buat/);
+    note=(parts.length>1?parts[1]:after).trim()||"Tanpa keterangan";
+    return {amount,note};
+  }
+  return null;
+}
+
+/* ===== Voice Recognition ===== */
+const mic=$("#mic"),statusText=$("#statusText");
+let recognition=null;
+function setupVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    statusText.textContent="Tidak didukung";
+    toast("Browser tidak mendukung voice recognition");
+    return;
+  }
+  recognition=new SR();
+  recognition.lang="id-ID";
+  recognition.interimResults=false;
+  recognition.onstart=()=>{mic.classList.add("recording");statusText.textContent="Mendengarkan...";}
+  recognition.onend=()=>{mic.classList.remove("recording");statusText.textContent="Idle";}
+  recognition.onerror=e=>{
+    mic.classList.remove("recording");
+    if(e.error==="not-allowed")toast("Izin mikrofon ditolak. Aktifkan izin suara di browser HP kamu (Settings → Site Settings → Microphone)");
+    else toast("Error rekaman: "+e.error);
+  };
+  recognition.onresult=e=>{
+    const t=e.results[0][0].transcript.trim();
+    toast('Terdengar: "'+t+'"');
+    const p=parseVoice(t);
+    if(!p||!p.amount){toast("Tidak dikenali, coba ucap: 'catat pengeluaran 5000 untuk kopi'");return;}
+    const d=getData();d.unshift({date:now(),note:p.note,amount:p.amount});saveData(d);render();toast("Tersimpan: "+fmt(p.amount));
+  };
+  mic.onclick=()=>{try{recognition.start();}catch(err){}}
+}
+setupVoice();
+render();
+</script>
+</body>
+</html>
