@@ -1,2 +1,2 @@
 # Notes-Money
-app wa
+MAJA
