@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MajaPay - Noir Gradient</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const savedUser = JSON.parse(localStorage.getItem('noir_grad_user'));
+        const isDark = savedUser ? savedUser.darkMode : true;
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif']
+                    },
+                    colors: {
+                        premium: {
+                            dark: '#0f1115',
+                            card: '#1a1d23',
+                            accent: '#31363f',
+                            silver: '#e2e8f0'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #0f172a;
+        }
+
+        .dark {
+            --bg-gradient: linear-gradient(135deg, #0f1115 0%, #1a1d23 100%);
+            --card-bg: rgba(26, 29, 35, 0.9);
+            --text-main: #f8fafc;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            margin: 0;
+            transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s ease;
+        }
+
+        .app-container {
+            max-width: 414px;
+            margin: 0 auto;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .noir-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 28px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .dark .noir-card {
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 40px -20px rgba(0,0,0,0.5);
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 24px 130px 24px;
+            scrollbar-width: none;
+        }
+        .content-area::-webkit-scrollbar { display: none; }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 24px;
+            left: 20px;
+            right: 20px;
+            height: 76px;
+            background: #0f172a;
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.4s ease;
+        }
+
+        .dark .bottom-nav {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            color: #64748b;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 10px;
+        }
+        
+        .nav-item.active { color: #ffffff; transform: translateY(-2px); }
+        .dark .nav-item.active { color: #0f1115; }
+
+        .voice-btn {
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(135deg, #334155 0%, #0f172a 100%);
+            border-radius: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            margin-top: -40px;
+            border: 2px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        .dark .voice-btn {
+            background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+            color: #0f1115;
+            border: 2px solid rgba(0,0,0,0.05);
+        }
+
+        .fab-add {
+            position: absolute;
+            bottom: 115px;
+            right: 24px;
+            width: 50px;
+            height: 50px;
+            background: #0f172a;
+            color: #fff;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            z-index: 99;
+        }
+        
+        .dark .fab-add { background: #ffffff; color: #0f1115; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideFade 0.4s ease-out; }
+        
+        @keyframes slideFade { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .input-premium {
+            background: rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 16px;
+            padding: 14px 18px;
+            width: 100%;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .dark .input-premium {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            color: white;
+        }
+
+        .mic-active {
+            animation: pulse-red 1.5s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container" id="app">
+    
+    <div class="content-area">
+        
+        <!-- ==================== BERANDA ==================== -->
+        <div id="tab-home" class="tab-content active">
+            <div class="flex justify-between items-start mb-10 mt-4">
+                <div>
+                    <h2 class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-2">Total Saldo Anda</h2>
+                    <h1 class="text-4xl font-display font-extrabold tracking-tighter" id="total-balance">Rp 0</h1>
+                </div>
+                <button id="theme-toggle-btn" class="w-11 h-11 noir-card flex items-center justify-center bg-slate-100 dark:bg-premium-card hover:scale-105 active:scale-95 transition-transform border-none">
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                </button>
+            </div>
+
+            <!-- Kartu Premium -->
+            <div class="noir-card p-7 mb-10 relative overflow-hidden bg-gradient-to-br from-slate-900 to-black text-white border-none shadow-2xl">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+                <div class="flex justify-between items-center mb-14 relative z-10">
+                    <div class="text-sm font-display font-bold tracking-widest italic opacity-90">MAJA PRESTIGE</div>
+                    <i class="fas fa-fingerprint text-xl opacity-30"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-[9px] opacity-40 font-bold mb-1 uppercase tracking-widest">Pemegang Akun</p>
+                    <p class="text-xl font-display font-bold tracking-tight" id="display-name">PENGGUNA</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Transaksi Terbaru</h3>
+                <button onclick="switchTab('tab-history')" class="text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-colors">LIHAT SEMUA</button>
+            </div>
+            <div id="recent-transactions" class="space-y-4"></div>
+        </div>
+
+        <!-- ==================== INTELIGENSI ==================== -->
+        <div id="tab-analytics" class="tab-content">
+            <h2 class="text-3xl font-display font-extrabold mb-8 tracking-tighter">Inteligensi</h2>
+            
+            <div class="noir-card p-6 mb-6 border-none bg-gradient-to-br from-white to-slate-50 dark:from-premium-card dark:to-premium-dark">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Kesehatan Finansial</p>
+                        <h4 id="health-status-badge" class="text-lg font-display font-bold">Menghitung...</h4>
+                    </div>
+                    <div class="text-4xl font-display font-black text-slate-800 dark:text-white" id="health-score">0</div>
+                </div>
+                <div class="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-5">
+                    <div id="health-progress" class="h-full bg-slate-900 dark:bg-white transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p id="ai-advice" class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium italic">"Menganalisis data transaksi Anda untuk saran yang akurat."</p>
+            </div>
+
+            <div class="noir-card p-6 mb-6">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6">Analisis Kas Mingguan</p>
+                <div class="relative h-[200px]">
+                    <canvas id="cashflowChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== RIWAYAT ==================== -->
+        <div id="tab-history" class="tab-content">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-display font-extrabold tracking-tighter">Buku Kas</h2>
+                <button onclick="clearAllData()" class="p-3 noir-card border-none text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 transition-colors">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+            </div>
+            <div id="all-transactions" class="space-y-3"></div>
+        </div>
+
+        <!-- ==================== PROFIL ==================== -->
+        <div id="tab-profile" class="tab-content">
+            <h2 class="text-3xl font-display font-extrabold mb-8 tracking-tighter">Profil</h2>
+            <div class="noir-card p-8 flex flex-col items-center mb-8 border-none bg-slate-50 dark:bg-premium-card">
+                <div class="relative mb-4">
+                    <img id="avatar-profile" class="w-24 h-24 rounded-3xl object-cover shadow-2xl border-4 border-white dark:border-slate-800" src="https://ui-avatars.com/api/?name=M&background=0f172a&color=fff" alt="User">
+                </div>
+                <h3 class="font-display font-bold text-xl" id="profile-name">Pengguna Maja</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-2">Noir Elite Edition</p>
+            </div>
+            
+            <div class="space-y-3">
+                <div onclick="openNameModal()" class="noir-card p-5 flex items-center justify-between cursor-pointer border-none bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <i class="fas fa-user-edit text-slate-400"></i>
+                        <span class="text-sm font-semibold">Ubah Identitas</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-[10px] text-slate-300"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tambah Manual -->
+    <button class="fab-add" onclick="openManualEntry()">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('tab-home')" id="nav-home"><i class="fas fa-home-alt"></i></div>
+        <div class="nav-item" onclick="switchTab('tab-analytics')" id="nav-analytics"><i class="fas fa-chart-line"></i></div>
+        
+        <div id="voice-trigger" class="voice-btn" onclick="startVoiceRecognition()">
+            <i class="fas fa-microphone"></i>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('tab-history')" id="nav-history"><i class="fas fa-file-invoice"></i></div>
+        <div class="nav-item" onclick="switchTab('tab-profile')" id="nav-profile"><i class="fas fa-user-cog"></i></div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] hidden" id="overlay" onclick="closeModals()"></div>
+
+    <!-- Bottom Sheet Manual -->
+    <div class="bottom-sheet fixed bottom-[-100%] left-0 right-0 bg-white dark:bg-premium-dark rounded-t-[40px] p-8 z-[1001] transition-all duration-500" id="manual-sheet">
+        <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 mx-auto rounded-full mb-8"></div>
+        <h3 class="font-display font-extrabold text-2xl mb-6 tracking-tighter">Catat Keuangan</h3>
+        <div class="flex gap-3 mb-8">
+            <button id="btn-expense" onclick="setEntryType('expense')" class="flex-1 py-4 rounded-2xl font-bold transition-all">PENGELUARAN</button>
+            <button id="btn-income" onclick="setEntryType('income')" class="flex-1 py-4 rounded-2xl font-bold transition-all">PEMASUKAN</button>
+        </div>
+        <div class="space-y-5 mb-8">
+            <input type="number" id="entry-amount" class="input-premium font-display font-bold text-2xl" placeholder="Rp 0">
+            <input type="text" id="entry-desc" class="input-premium font-medium" placeholder="Keterangan transaksi">
+        </div>
+        <button onclick="saveManualEntry()" class="w-full bg-slate-900 text-white dark:bg-white dark:text-black py-5 rounded-3xl font-display font-extrabold tracking-wide">SIMPAN SEKARANG</button>
+    </div>
+
+    <!-- Bottom Sheet Name -->
+    <div class="bottom-sheet fixed bottom-[-100%] left-0 right-0 bg-white dark:bg-premium-dark rounded-t-[40px] p-8 z-[1001] transition-all duration-500" id="name-sheet">
+        <h3 class="font-display font-extrabold text-2xl mb-8 tracking-tighter text-center">Profil Baru</h3>
+        <input type="text" id="new-name" class="input-premium mb-10 text-center text-lg" placeholder="Masukkan nama">
+        <button onclick="saveName()" class="w-full bg-slate-900 text-white dark:bg-white dark:text-black py-5 rounded-3xl font-display font-bold uppercase tracking-widest">Update Profil</button>
+    </div>
+
+    <!-- Voice Sheet -->
+    <div class="bottom-sheet fixed bottom-[-100%] left-0 right-0 bg-white dark:bg-premium-dark rounded-t-[40px] p-10 z-[1001] transition-all duration-500" id="voice-sheet">
+        <div class="flex flex-col items-center py-6 text-center">
+            <div id="mic-visual" class="w-20 h-20 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-black text-2xl">
+                <i class="fas fa-microphone"></i>
+            </div>
+            <p id="voice-status" class="mt-8 font-display font-bold text-xl tracking-tight">Mendengarkan...</p>
+            <div class="mt-4 p-4 rounded-2xl bg-slate-100 dark:bg-white/5 w-full min-h-[60px] flex items-center justify-center">
+                <p id="voice-result" class="text-slate-500 text-sm italic">"Katakan sesuatu..."</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let state = {
+        transactions: JSON.parse(localStorage.getItem('noir_grad_tx')) || [],
+        user: JSON.parse(localStorage.getItem('noir_grad_user')) || { name: 'Maja User', darkMode: true },
+        currentEntryType: 'expense'
+    };
+
+    const formatRp = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+
+    function applyTheme() {
+        const isDark = state.user.darkMode;
+        const icon = document.getElementById('theme-icon');
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+            if(icon) icon.className = 'fas fa-sun text-yellow-400';
+        } else {
+            document.documentElement.classList.remove('dark');
+            if(icon) icon.className = 'fas fa-moon text-slate-700';
+        }
+    }
+
+    function toggleDarkMode() {
+        state.user.darkMode = !state.user.darkMode;
+        localStorage.setItem('noir_grad_user', JSON.stringify(state.user));
+        applyTheme();
+        updateUI();
+    }
+
+    document.getElementById('theme-toggle-btn').addEventListener('click', toggleDarkMode);
+
+    function updateUI() {
+        const income = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const expense = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const balance = income - expense;
+
+        document.getElementById('total-balance').innerText = formatRp(balance);
+        document.getElementById('profile-name').innerText = state.user.name;
+        document.getElementById('display-name').innerText = state.user.name.toUpperCase();
+
+        const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(state.user.name)}&background=${state.user.darkMode ? 'ffffff&color=000' : '0f172a&color=fff'}&bold=true&rounded=true`;
+        document.getElementById('avatar-profile').src = avatar;
+
+        renderTransactions();
+        renderIntelligence(income, expense);
+    }
+
+    function renderTransactions() {
+        const cont = document.getElementById('recent-transactions');
+        const allCont = document.getElementById('all-transactions');
+        const listHtml = state.transactions.slice().reverse().map(t => `
+            <div class="flex items-center justify-between p-4 noir-card border-none bg-white/60 dark:bg-white/5">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">
+                        <i class="fas ${t.type === 'income' ? 'fa-arrow-down' : 'fa-arrow-up'} text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold tracking-tight">${t.desc}</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">${new Date(t.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}</p>
+                    </div>
+                </div>
+                <p class="text-sm font-display font-black ${t.type === 'income' ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-100'}">
+                    ${t.type === 'income' ? '+' : '-'}${formatRp(t.amount)}
+                </p>
+            </div>
+        `).join('');
+        
+        const recentHtml = state.transactions.slice().reverse().slice(0, 3).map(t => `
+            <div class="flex items-center justify-between p-4 noir-card border-none bg-white/60 dark:bg-white/5">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">
+                        <i class="fas ${t.type === 'income' ? 'fa-arrow-down' : 'fa-arrow-up'} text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold tracking-tight">${t.desc}</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">${new Date(t.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}</p>
+                    </div>
+                </div>
+                <p class="text-sm font-display font-black ${t.type === 'income' ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-100'}">
+                    ${t.type === 'income' ? '+' : '-'}${formatRp(t.amount)}
+                </p>
+            </div>
+        `).join('');
+
+        cont.innerHTML = state.transactions.length > 0 ? recentHtml : '<p class="text-[10px] text-center text-slate-400 py-10 font-bold tracking-widest uppercase">Kosong</p>';
+        allCont.innerHTML = listHtml || '<p class="text-[10px] text-center text-slate-400 py-10 font-bold tracking-widest uppercase">Kosong</p>';
+    }
+
+    function renderIntelligence(inc, exp) {
+        let score = 0;
+        let advice = "Belum ada data cukup.";
+        let status = "NETRAL";
+        if (inc > 0) {
+            const savingsRatio = (inc - exp) / inc;
+            score = Math.max(0, Math.min(100, Math.floor(savingsRatio * 100)));
+            if (score >= 60) { status = "ELITE"; advice = "Finansial sangat kuat. Tabungan >60%."; }
+            else if (score >= 30) { status = "STABIL"; advice = "Manajemen sehat. Pertahankan rasio ini."; }
+            else if (score >= 0) { status = "WASPADA"; advice = "Pengeluaran hampir setara pendapatan."; }
+            else { status = "KRITIS"; advice = "Pengeluaran melebihi pendapatan!"; score = 0; }
+        }
+        document.getElementById('health-score').innerText = score;
+        document.getElementById('ai-advice').innerText = advice;
+        document.getElementById('health-status-badge').innerText = status;
+        document.getElementById('health-progress').style.width = score + '%';
+        updateChart(inc, exp);
+    }
+
+    // VOICE RECOGNITION - LOGIKA DIPERBAIKI (GAJI 1-9 JUTA)
+    let recognition;
+    function startVoiceRecognition() {
+        openModal('voice-sheet');
+        const status = document.getElementById('voice-status');
+        const resultText = document.getElementById('voice-result');
+        const micVisual = document.getElementById('mic-visual');
+
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            status.innerText = "Browser tidak mendukung suara.";
+            return;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'id-ID';
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+            status.innerText = "Mendengarkan...";
+            micVisual.classList.add('mic-active');
+        };
+
+        recognition.onresult = (event) => {
+            const text = event.results[0][0].transcript.toLowerCase();
+            resultText.innerText = `"${text}"`;
+            processVoiceText(text);
+        };
+
+        recognition.onerror = () => {
+            status.innerText = "Gagal mendengarkan.";
+            micVisual.classList.remove('mic-active');
+        };
+
+        recognition.onend = () => {
+            micVisual.classList.remove('mic-active');
+        };
+
+        recognition.start();
+    }
+
+    function processVoiceText(text) {
+        const status = document.getElementById('voice-status');
+        
+        let amount = 0;
+        let type = 'expense';
+        
+        // 1. Deteksi Tipe Transaksi (Prioritas Pemasukan)
+        const incomeWords = ['gaji', 'pemasukan', 'bonus', 'untung', 'dapat', 'nemu', 'transferan', 'nabung', 'penghasilan', 'income', 'cair'];
+        if (incomeWords.some(word => text.includes(word))) type = 'income';
+
+        // 2. Normalisasi Teks untuk Satuan Jutaan yang sering salah deteksi
+        // Menangani 'jt', 'jt.', 'juta', 'jute', 'juto'
+        const normalizedText = text
+            .replace(/jt\b/g, ' juta')
+            .replace(/jt\./g, ' juta')
+            .replace(/jute/g, ' juta')
+            .replace(/juto/g, ' juta');
+        
+        // 3. Ekstrak Angka Utama
+        let rawNumbers = normalizedText.match(/\d+/g);
+        if (rawNumbers) {
+            amount = parseInt(rawNumbers[0]);
+        }
+
+        // 4. Logika Pengali Sesuai Prioritas
+        const textWithoutSpace = normalizedText.replace(/\s+/g, '');
+        const hasJuta = normalizedText.includes('juta') || textWithoutSpace.includes('juta');
+        const hasRibu = normalizedText.includes('ribu') || normalizedText.includes('rebu');
+        const hasK = normalizedText.endsWith('k') || normalizedText.includes(' k ') || textWithoutSpace.includes('0k');
+
+        if (hasJuta) {
+            // "Gaji 5 juta" atau "5 juta" -> 5 * 1.000.000
+            amount *= 1000000;
+        } else if (hasRibu || hasK) {
+            // "Beli kopi 50 ribu" -> 50 * 1.000
+            amount *= 1000;
+        } else if (amount > 0 && amount < 100) {
+            // LOGIKA PERBAIKAN: Jika angka kecil (1-9) dan konteksnya GAJI/PEMASUKAN
+            // maka otomatis dianggap JUTAAN meskipun kata "juta" tidak tertangkap dengan jelas
+            if (type === 'income') {
+                 amount *= 1000000; // Contoh: "Gaji lima" -> 5.000.000
+            } else {
+                 amount *= 1000; // Untuk pengeluaran default ke ribu
+            }
+        } else if (amount >= 100 && amount < 1000) {
+            // Contoh: "Gaji 500" biasanya 500 ribu
+            amount *= 1000;
+        }
+
+        // 5. Ekstrak Keterangan (Bersihkan dari angka dan satuan)
+        const stopWords = ['ribu', 'juta', 'jt', 'rupiah', 'rp', 'k', 'rebu', 'beli', 'bayar', 'gaji', 'pemasukan', 'bonus', 'penghasilan', 'nominal', 'sebesar', 'sebanyak', 'cair'];
+        let description = normalizedText.split(' ')
+            .filter(w => !stopWords.includes(w) && isNaN(parseInt(w)) && w.length > 1)
+            .join(' ');
+
+        if (amount > 0) {
+            const finalDesc = description.charAt(0).toUpperCase() + description.slice(1) || (type === 'income' ? 'Pemasukan' : 'Pengeluaran');
+            state.transactions.push({ 
+                desc: finalDesc, 
+                amount: amount, 
+                type: type, 
+                date: new Date().toISOString() 
+            });
+            localStorage.setItem('noir_grad_tx', JSON.stringify(state.transactions));
+            updateUI();
+            status.innerText = "Tercatat: " + formatRp(amount);
+            setTimeout(closeModals, 1500);
+        } else {
+            status.innerText = "Nominal tidak terbaca.";
+        }
+    }
+
+    function openManualEntry() {
+        document.getElementById('entry-amount').value = '';
+        document.getElementById('entry-desc').value = '';
+        setEntryType('expense');
+        openModal('manual-sheet');
+    }
+
+    function setEntryType(type) {
+        state.currentEntryType = type;
+        const btnExp = document.getElementById('btn-expense');
+        const btnInc = document.getElementById('btn-income');
+        if(type === 'expense') {
+            btnExp.className = "flex-1 py-4 rounded-2xl font-bold bg-slate-900 text-white dark:bg-white dark:text-black";
+            btnInc.className = "flex-1 py-4 rounded-2xl font-bold bg-slate-50 dark:bg-slate-900 text-slate-400";
+        } else {
+            btnInc.className = "flex-1 py-4 rounded-2xl font-bold bg-slate-900 text-white dark:bg-white dark:text-black";
+            btnExp.className = "flex-1 py-4 rounded-2xl font-bold bg-slate-50 dark:bg-slate-900 text-slate-400";
+        }
+    }
+
+    function saveManualEntry() {
+        const val = document.getElementById('entry-amount').value;
+        const desc = document.getElementById('entry-desc').value;
+        if(val > 0 && desc) {
+            state.transactions.push({ desc, amount: parseInt(val), type: state.currentEntryType, date: new Date().toISOString() });
+            localStorage.setItem('noir_grad_tx', JSON.stringify(state.transactions));
+            updateUI();
+            closeModals();
+        }
+    }
+
+    function switchTab(id) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.getElementById('nav-' + id.split('-')[1]).classList.add('active');
+    }
+
+    function openModal(id) {
+        document.getElementById('overlay').classList.remove('hidden');
+        document.getElementById(id).style.bottom = "0";
+    }
+
+    function closeModals() {
+        document.getElementById('overlay').classList.add('hidden');
+        document.querySelectorAll('.bottom-sheet').forEach(s => s.style.bottom = "-100%");
+        if (recognition) recognition.stop();
+    }
+
+    function saveName() {
+        const n = document.getElementById('new-name').value;
+        if(n) { 
+            state.user.name = n; 
+            localStorage.setItem('noir_grad_user', JSON.stringify(state.user)); 
+            updateUI(); 
+            closeModals(); 
+        }
+    }
+
+    function openNameModal() {
+        document.getElementById('new-name').value = state.user.name;
+        openModal('name-sheet');
+    }
+
+    function clearAllData() {
+        if(confirm("Hapus semua data permanen?")) {
+            state.transactions = [];
+            localStorage.removeItem('noir_grad_tx');
+            updateUI();
+        }
+    }
+
+    let chart;
+    function updateChart(inc, exp) {
+        const ctx = document.getElementById('cashflowChart').getContext('2d');
+        if(chart) chart.destroy();
+        const isDark = state.user.darkMode;
+        const color = isDark ? '#ffffff' : '#0f172a';
+        const points = [inc * 0.1, exp * 0.4, inc * 0.7, (inc - exp)];
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['M1', 'M2', 'M3', 'M4'],
+                datasets: [{
+                    data: points,
+                    borderColor: color,
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: color,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: isDark ? '#475569' : '#94a3b8', font: { size: 9, weight: 'bold' } } } }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        applyTheme();
+        updateUI();
+    });
+</script>
+
+</body>
+</html>
